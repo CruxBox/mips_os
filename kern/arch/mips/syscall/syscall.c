@@ -1,31 +1,3 @@
-/*
- * Copyright (c) 2000, 2001, 2002, 2003, 2004, 2005, 2008, 2009
- *	The President and Fellows of Harvard College.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE UNIVERSITY AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE UNIVERSITY OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
 
 #include <types.h>
 #include <kern/errno.h>
@@ -35,7 +7,6 @@
 #include <thread.h>
 #include <current.h>
 #include <syscall.h>
-
 
 /*
  * System call dispatcher.
@@ -75,8 +46,7 @@
  * stack, starting at sp+16 to skip over the slots for the
  * registerized values, with copyin().
  */
-void
-syscall(struct trapframe *tf)
+void syscall(struct trapframe *tf)
 {
 	int callno;
 	int32_t retval;
@@ -99,38 +69,40 @@ syscall(struct trapframe *tf)
 
 	retval = 0;
 
-	switch (callno) {
-	    case SYS_reboot:
+	switch (callno)
+	{
+	case SYS_reboot:
 		err = sys_reboot(tf->tf_a0);
 		break;
 
-	    case SYS___time:
+	case SYS___time:
 		err = sys___time((userptr_t)tf->tf_a0,
-				 (userptr_t)tf->tf_a1);
+						 (userptr_t)tf->tf_a1);
 		break;
 
-	    /* Add stuff here */
+		/* Add stuff here */
 
-	    default:
+	default:
 		kprintf("Unknown syscall %d\n", callno);
 		err = ENOSYS;
 		break;
 	}
 
-
-	if (err) {
+	if (err)
+	{
 		/*
 		 * Return the error code. This gets converted at
 		 * userlevel to a return value of -1 and the error
 		 * code in errno.
 		 */
 		tf->tf_v0 = err;
-		tf->tf_a3 = 1;      /* signal an error */
+		tf->tf_a3 = 1; /* signal an error */
 	}
-	else {
+	else
+	{
 		/* Success. */
 		tf->tf_v0 = retval;
-		tf->tf_a3 = 0;      /* signal no error */
+		tf->tf_a3 = 0; /* signal no error */
 	}
 
 	/*
@@ -154,8 +126,7 @@ syscall(struct trapframe *tf)
  *
  * Thus, you can trash it and do things another way if you prefer.
  */
-void
-enter_forked_process(struct trapframe *tf)
+void enter_forked_process(struct trapframe *tf)
 {
 	(void)tf;
 }
