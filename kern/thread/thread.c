@@ -582,7 +582,6 @@ thread_switch(threadstate_t newstate, struct wchan *wc, struct spinlock *lk)
 		splx(spl);
 		return;
 	}
-
 	/* Put the thread in the right place. */
 	switch (newstate) {
 	    case S_RUN:

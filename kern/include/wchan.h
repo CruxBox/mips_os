@@ -36,7 +36,11 @@ bool wchan_isempty(struct wchan *wc, struct spinlock *lk);
  * sleeping, and relocked upon return.
  */
 void wchan_sleep(struct wchan *wc, struct spinlock *lk);
-
+/*
+Go to sleep on a wait channel. 
+Lock version
+ */
+void wchan_sleep(struct lock* lock, struct thread* t)
 /*
  * Wake up one thread, or all threads, sleeping on a wait channel.
  * The associated spinlock should be locked.
