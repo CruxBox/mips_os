@@ -5,9 +5,8 @@
  * Wait channel.
  */
 
-
 struct spinlock; /* in spinlock.h */
-struct wchan; /* Opaque */
+struct wchan;    /* Opaque */
 
 /*
  * Create a wait channel. Use NAME as a symbolic name for the channel.
@@ -37,11 +36,6 @@ bool wchan_isempty(struct wchan *wc, struct spinlock *lk);
  */
 void wchan_sleep(struct wchan *wc, struct spinlock *lk);
 /*
-Go to sleep on a wait channel. 
-Lock version
- */
-void wchan_sleep(struct lock* lock, struct thread* t)
-/*
  * Wake up one thread, or all threads, sleeping on a wait channel.
  * The associated spinlock should be locked.
  *
@@ -50,6 +44,5 @@ void wchan_sleep(struct lock* lock, struct thread* t)
  */
 void wchan_wakeone(struct wchan *wc, struct spinlock *lk);
 void wchan_wakeall(struct wchan *wc, struct spinlock *lk);
-
 
 #endif /* _WCHAN_H_ */

@@ -196,7 +196,7 @@ void lock_release(struct lock *lock)
 
 	// Write this
 	KASSERT(lock != NULL);
-
+	spinlock_acquire(&lock->spinlock_wchan);
 	if (lock_do_i_hold(lock))
 	{
 		KASSERT(lock->holder != NULL);
@@ -207,11 +207,12 @@ void lock_release(struct lock *lock)
 		//wake a thread from sleep
 		wchan_wakeone(lock->lock_wchan, &lock->spinlock_wchan);
 	}
+	spinlock_release(&lock->spinlock_wchan);
 
 	HANGMAN_RELEASE(&curthread->t_hangman, &lock->lk_hangman);
 }
 
-int lock_do_i_hold(struct lock *lock)
+bool lock_do_i_hold(struct lock *lock)
 {
 	return (lock->holder == curthread);
 }
