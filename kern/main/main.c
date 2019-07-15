@@ -1,33 +1,4 @@
 /*
- * Copyright (c) 2000, 2001, 2002, 2003, 2004, 2005, 2008, 2009
- *	The President and Fellows of Harvard College.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE UNIVERSITY AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE UNIVERSITY OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
-/*
  * Main.
  */
 
@@ -50,8 +21,7 @@
 #include <test.h>
 #include <kern/test161.h>
 #include <version.h>
-#include "autoconf.h"  // for pseudoconfig
-
+#include "autoconf.h" // for pseudoconfig
 
 /*
  * These two pieces of data are maintained by the makefiles and build system.
@@ -69,15 +39,13 @@ extern const char buildconfig[];
  * Copyright message for the OS/161 base code.
  */
 static const char harvard_copyright[] =
-    "Copyright (c) 2000, 2001-2005, 2008-2011, 2013, 2014\n"
-    "   President and Fellows of Harvard College.  All rights reserved.\n";
-
+	"Copyright (c) 2000, 2001-2005, 2008-2011, 2013, 2014\n"
+	"   President and Fellows of Harvard College.  All rights reserved.\n";
 
 /*
  * Initial boot sequence.
  */
-static
-void
+static void
 boot(void)
 {
 	/*
@@ -103,7 +71,7 @@ boot(void)
 	kprintf("\n");
 
 	kprintf("Put-your-group-name-here's system version %s (%s #%d)\n",
-		GROUP_VERSION, buildconfig, buildversion);
+			GROUP_VERSION, buildconfig, buildversion);
 	kprintf("\n");
 
 	/* Early initialization. */
@@ -145,8 +113,7 @@ boot(void)
 /*
  * Shutdown sequence. Opposite to boot().
  */
-static
-void
+static void
 shutdown(void)
 {
 
@@ -170,30 +137,31 @@ shutdown(void)
  * not because this is where system call code should go. Other syscall
  * code should probably live in the "syscall" directory.
  */
-int
-sys_reboot(int code)
+int sys_reboot(int code)
 {
-	switch (code) {
-	    case RB_REBOOT:
-	    case RB_HALT:
-	    case RB_POWEROFF:
+	switch (code)
+	{
+	case RB_REBOOT:
+	case RB_HALT:
+	case RB_POWEROFF:
 		break;
-	    default:
+	default:
 		return EINVAL;
 	}
 
 	shutdown();
 
-	switch (code) {
-	    case RB_HALT:
+	switch (code)
+	{
+	case RB_HALT:
 		kprintf("The system is halted.\n");
 		mainbus_halt();
 		break;
-	    case RB_REBOOT:
+	case RB_REBOOT:
 		kprintf("Rebooting...\n");
 		mainbus_reboot();
 		break;
-	    case RB_POWEROFF:
+	case RB_POWEROFF:
 		kprintf("The system is halted.\n");
 		mainbus_poweroff();
 		break;
@@ -207,8 +175,7 @@ sys_reboot(int code)
  * Kernel main. Boot up, then fork the menu thread; wait for a reboot
  * request, and then shut down.
  */
-void
-kmain(char *arguments)
+void kmain(char *arguments)
 {
 	boot();
 

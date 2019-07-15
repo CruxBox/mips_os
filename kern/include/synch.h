@@ -90,8 +90,9 @@ bool lock_do_i_hold(struct lock *);
 struct cv
 {
         char *cv_name;
-        // add what you need here
-        // (don't forget to mark things volatile as needed)
+        struct wchan* wchan;
+        struct spinlock spinlock_wchan;
+        volatile int available;
 };
 
 struct cv *cv_create(const char *name);
