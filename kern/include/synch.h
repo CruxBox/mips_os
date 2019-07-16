@@ -92,7 +92,6 @@ struct cv
         char *cv_name;
         struct wchan* wchan;
         struct spinlock spinlock_wchan;
-        volatile int available;
 };
 
 struct cv *cv_create(const char *name);

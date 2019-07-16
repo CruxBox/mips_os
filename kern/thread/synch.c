@@ -251,7 +251,6 @@ cv_create(const char *name)
 	cv->wchan = wchan_create(cv->cv_name);
 
 	spinlock_init(&cv->spinlock_wchan);
-	cv->available = 1;
 
 	return cv;
 }
@@ -271,19 +270,15 @@ void cv_wait(struct cv *cv, struct lock *lock)
 	struct wchan *waitlist = cv->wchan;
 
 	KASSERT(lock != NULL);
-	KASSERT(lock->holder == curthread);
-	KASSERT(lock->available == 0);
+	KASSERT(lock_do_i_hold(lock) == true);
+
 
 	lock_release(lock);
-	cv->available = 0;
 
 	spinlock_acquire(&cv->spinlock_wchan);
 
-	//threadlist_addtail(waitlist->wc_threads, curthread);
-	while (cv->available == 0)
-	{
-		wchan_sleep(waitlist, &cv->spinlock_wchan);
-	}
+	wchan_sleep(waitlist, &cv->spinlock_wchan);
+
 	spinlock_release(&cv->spinlock_wchan);
 	
 	lock_acquire(lock);
@@ -294,8 +289,8 @@ void cv_signal(struct cv *cv, struct lock *lock)
 
 	spinlock_acquire(&cv->spinlock_wchan);
 
-	lock_release(lock);
-	cv->available = 1;
+	KASSERT(lock_do_i_hold(lock) == true);
+
 	wchan_wakeone(cv->wchan, &cv->spinlock_wchan);
 
 	KASSERT(lock->available == 0);
@@ -308,8 +303,8 @@ void cv_broadcast(struct cv *cv, struct lock *lock)
 {
 
 	spinlock_acquire(&cv->spinlock_wchan);
-	lock_release(lock);
-	cv->available = 1;
+	KASSERT(lock_do_i_hold(lock) == true);
+
 	wchan_wakeall(cv->wchan, &cv->spinlock_wchan);
 
 	spinlock_release(&cv->spinlock_wchan);
