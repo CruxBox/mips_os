@@ -163,7 +163,7 @@ void lock_destroy(struct lock *lock)
 void lock_acquire(struct lock *lock)
 {
 	/* Call this (atomically) before waiting for a lock */
-	HANGMAN_WAIT(&curthread->t_hangman, &lock->lk_hangman);
+	
 
 	// Write this
 	KASSERT(lock != NULL);
@@ -177,7 +177,7 @@ void lock_acquire(struct lock *lock)
 	struct wchan *waitlist = lock->lock_wchan;
 	while (lock->available != 1)
 	{
-		//threadlist_addtail(waitlist->wc_threads, curthread);
+		HANGMAN_WAIT(&curthread->t_hangman, &lock->lk_hangman);
 		wchan_sleep(waitlist, &lock->spinlock_wchan);
 	}
 
@@ -188,9 +188,10 @@ void lock_acquire(struct lock *lock)
 	lock->available = 0;
 	KASSERT(lock->holder != NULL);
 
+	HANGMAN_ACQUIRE(&curthread->t_hangman, &lock->lk_hangman);
+
 	spinlock_release(&lock->spinlock_wchan);
 
-	HANGMAN_ACQUIRE(&curthread->t_hangman, &lock->lk_hangman);
 	return;
 	/* Call this (atomically) once the lock is acquired */
 }
@@ -212,13 +213,13 @@ void lock_release(struct lock *lock)
 
 		lock->holder = NULL;
 		lock->available = 1;
-
+		HANGMAN_RELEASE(&curthread->t_hangman, &lock->lk_hangman);
 		//wake a thread from sleep
 		wchan_wakeone(lock->lock_wchan, &lock->spinlock_wchan);
 	}
+	
 	spinlock_release(&lock->spinlock_wchan);
 
-	HANGMAN_RELEASE(&curthread->t_hangman, &lock->lk_hangman);
 }
 
 bool lock_do_i_hold(struct lock *lock)
@@ -273,9 +274,9 @@ void cv_wait(struct cv *cv, struct lock *lock)
 	KASSERT(lock_do_i_hold(lock) == true);
 
 
-	lock_release(lock);
-
 	spinlock_acquire(&cv->spinlock_wchan);
+
+		lock_release(lock);
 
 	wchan_sleep(waitlist, &cv->spinlock_wchan);
 
