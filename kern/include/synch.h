@@ -127,8 +127,9 @@ void cv_broadcast(struct cv *cv, struct lock *lock);
 struct rwlock
 {
         char *rwlock_name;
-        // add what you need here
-        // (don't forget to mark things volatile as needed)
+        struct semaphore* sem_readers;
+        struct lock* writer_lock;
+        volatile int readers;
 };
 
 struct rwlock *rwlock_create(const char *);

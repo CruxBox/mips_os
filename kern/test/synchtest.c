@@ -860,3 +860,31 @@ cvtest5(int nargs, char **args) {
 
 	return 0;
 }
+
+
+void
+writer_thread(void *junk1, unsigned long junk2)
+{
+	(void)junk1;
+	(void)junk2;
+}
+
+void
+reader_thread(void *junk1, unsigned long junk2)
+{
+	(void)junk1;
+	(void)junk2;
+}
+
+void
+rwt1()
+{
+	//readers and writers can go randomly
+	/*
+		there are 26 writers writing 26 alphabets into a single buffer. the readers will go in and copy the buffer into their array[i] and we will use this later for checking with our "queue array".
+		in both of the threads there will be a spinlocked queue array that appends either W or R depending on the thread.
+		For checking each array[i] with queue array, we check if sizeof(array[i]) == no.of 'W' in the lengthof(q -> q[i]);
+	 */
+
+
+}

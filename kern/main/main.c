@@ -39,8 +39,7 @@ extern const char buildconfig[];
  * Copyright message for the OS/161 base code.
  */
 static const char harvard_copyright[] =
-	"Copyright (c) 2000, 2001-2005, 2008-2011, 2013, 2014\n"
-	"   President and Fellows of Harvard College.  All rights reserved.\n";
+	"Welcome to your Operating System, Shubham\n";
 
 /*
  * Initial boot sequence.

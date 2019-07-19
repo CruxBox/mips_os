@@ -147,7 +147,8 @@ lock_create(const char *name)
 	return lock;
 }
 
-void lock_destroy(struct lock *lock)
+void
+ lock_destroy(struct lock *lock)
 {
 	KASSERT(lock != NULL);
 	KASSERT(lock->holder == NULL);
@@ -160,7 +161,8 @@ void lock_destroy(struct lock *lock)
 	kfree(lock);
 }
 
-void lock_acquire(struct lock *lock)
+void
+ lock_acquire(struct lock *lock)
 {
 	/* Call this (atomically) before waiting for a lock */
 	
@@ -196,7 +198,8 @@ void lock_acquire(struct lock *lock)
 	/* Call this (atomically) once the lock is acquired */
 }
 
-void lock_release(struct lock *lock)
+void 
+lock_release(struct lock *lock)
 {
 	/* Call this (atomically) when the lock is released */
 
@@ -222,7 +225,8 @@ void lock_release(struct lock *lock)
 
 }
 
-bool lock_do_i_hold(struct lock *lock)
+bool
+ lock_do_i_hold(struct lock *lock)
 {
 	return (lock->holder == curthread);
 }
@@ -256,7 +260,8 @@ cv_create(const char *name)
 	return cv;
 }
 
-void cv_destroy(struct cv *cv)
+void
+ cv_destroy(struct cv *cv)
 {
 	KASSERT(cv != NULL);
 
@@ -266,7 +271,8 @@ void cv_destroy(struct cv *cv)
 	kfree(cv);
 }
 
-void cv_wait(struct cv *cv, struct lock *lock)
+void
+ cv_wait(struct cv *cv, struct lock *lock)
 {
 	struct wchan *waitlist = cv->wchan;
 
@@ -285,7 +291,8 @@ void cv_wait(struct cv *cv, struct lock *lock)
 	lock_acquire(lock);
 }
 
-void cv_signal(struct cv *cv, struct lock *lock)
+void 
+cv_signal(struct cv *cv, struct lock *lock)
 {
 
 	spinlock_acquire(&cv->spinlock_wchan);
@@ -300,7 +307,8 @@ void cv_signal(struct cv *cv, struct lock *lock)
 	spinlock_release(&cv->spinlock_wchan);
 }
 
-void cv_broadcast(struct cv *cv, struct lock *lock)
+void 
+cv_broadcast(struct cv *cv, struct lock *lock)
 {
 
 	spinlock_acquire(&cv->spinlock_wchan);
@@ -309,4 +317,74 @@ void cv_broadcast(struct cv *cv, struct lock *lock)
 	wchan_wakeall(cv->wchan, &cv->spinlock_wchan);
 
 	spinlock_release(&cv->spinlock_wchan);
+}
+
+struct rwlock*
+rwlock_create(const char* name)
+{
+	struct rwlock* rwlock_new;
+	rwlock_new = kmalloc(sizeof(*rwlock_new));
+
+	rwlock_new->rwlock_name = kstrdup(name);
+
+	rwlock_new->sem_readers = sem_create(name,0);
+
+	rwlock_new->writer_lock = lock_create(name);
+
+	rwlock_new->readers = 0;
+
+	return rwlock_new;
+}
+
+void
+rwlock_destroy (struct rwlock* rw)
+{
+	sem_destroy(rw->sem_readers);
+	lock_destroy(rw->writer_lock);
+	kfree(rw->rwlock_name);
+	kfree(rw);
+}
+
+void
+rwlock_acquire_read(struct rwlock* rw)
+{
+	//check if there is a writer that has acquired a lock
+	lock_acquire(rw->writer_lock);
+	lock_release(rw->writer_lock);
+	//this section is entered when no writer has acquired the lock
+	//this section is small
+	
+	V(rw->sem_readers);
+	rw->readers++;
+	
+}
+
+void
+rwlock_release_read(struct rwlock* rw)
+{	
+	KASSERT( rw != NULL);
+	if(rw->readers == 0) return;
+	P(rw->sem_readers);
+	rw->readers--;
+	//if(readers==0 call cv_signal)
+}
+
+void
+rwlock_acquire_write(struct rwlock* rw)
+{
+	KASSERT( rw != NULL);
+	
+	lock_acquire(rw->writer_lock);
+	
+	while(rw->sem_readers->sem_count != 0);
+	
+	KASSERT( rw->readers == 0);
+
+}
+
+void
+rwlock_release_write(struct rwlock* rw)
+{
+	KASSERT(rw!=NULL);
+	lock_release(rw->writer_lock);
 }
