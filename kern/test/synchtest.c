@@ -861,30 +861,68 @@ cvtest5(int nargs, char **args) {
 	return 0;
 }
 
-
+/*
+Here starts the reader-writer locks testing.
+RWT1 
+Readers and writers can go randomly.
+there are 26 writers writing 26 alphabets into a single buffer. the readers will go in and copy the buffer into their array[i] and we will use this later for checking with our "queue array".
+in both of the threads there will be a spinlocked queue array that appends either W or R depending on the thread.
+For checking each array[i] with queue array, we check if sizeof(array[i]) == no.of 'W' in the lengthof(q -> q[i]);
+*/
 void
-writer_thread(void *junk1, unsigned long junk2)
+writer_thread(void *junk1, unsigned long num)
 {
 	(void)junk1;
-	(void)junk2;
+	rwlock_acquire_write(test);
 }
 
 void
-reader_thread(void *junk1, unsigned long junk2)
+reader_thread(char* reader_buffer, unsigned long num)
 {
-	(void)junk1;
-	(void)junk2;
+
 }
 
 void
-rwt1()
+rwt1(int nargs, char** args)
 {
-	//readers and writers can go randomly
-	/*
-		there are 26 writers writing 26 alphabets into a single buffer. the readers will go in and copy the buffer into their array[i] and we will use this later for checking with our "queue array".
-		in both of the threads there will be a spinlocked queue array that appends either W or R depending on the thread.
-		For checking each array[i] with queue array, we check if sizeof(array[i]) == no.of 'W' in the lengthof(q -> q[i]);
-	 */
+	struct rw* test = rwlock_create("rwt1");
+	char* buffer = kmalloc(26);
+	if(buffer == NULL)
+	{
+		panic("Error creating buffer\n");
+		return;
+	}
 
+	char* queue = kmalloc(26+27);
+	if(queue == NULL)
+	{
+		panic("Error creating queue\n");
+		return;
+	}
+
+	char* readers_buffer[27];
+
+	for(int i=0;i<26;i++)
+	{
+		int result1 = thread_fork("writer_thread",NULL,writer_thread,NULL,i);
+		if(result1)
+		{
+			panic("Error creating writer thread\n");
+		}
+		int result2 = thread_fork("reader_thread",NULL,reader_thread,readers_buffer,i);
+		if(result2)
+		{
+			panic("Error creating reader thread\n");
+		}
+	}
+
+	int result3 = thread_fork("last reader thread",NULL,reader_thread,reader_thread,26);
+	if(result3)
+	{
+		panic("Error creating reader thread\n");
+	}
+
+
+	rwlock_destroy(test);
 
 }
