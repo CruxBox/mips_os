@@ -869,31 +869,52 @@ there are 26 writers writing 26 alphabets into a single buffer. the readers will
 in both of the threads there will be a spinlocked queue array that appends either W or R depending on the thread.
 For checking each array[i] with queue array, we check if sizeof(array[i]) == no.of 'W' in the lengthof(q -> q[i]);
 */
+struct rw* test;
+char* buffer;
+char* queue;
+struct spinlock* spinner;
 void
 writer_thread(void *junk1, unsigned long num)
 {
 	(void)junk1;
+
 	rwlock_acquire_write(test);
+	
+	queue[sizeof(queue)] = 'W';
+	buffer[num] = 'a' + num;
+	
+	rwlock_release_write(test);
 }
 
 void
 reader_thread(char* reader_buffer, unsigned long num)
-{
+{	
+	rwlock_acquire_read(test);
+
+	spinlock_acquire(&spinner);
+	queue[sizeof(queue)] = 'R';
+	spinlock_release(&spinner);
+	
+	reader_buffer = kstrdup(buffer);
+	
+	rwlock_release_read(test);
 
 }
 
 void
 rwt1(int nargs, char** args)
-{
-	struct rw* test = rwlock_create("rwt1");
-	char* buffer = kmalloc(26);
+{	
+	spinlock_init(&spinner);
+	test = rwlock_create("rwt1");
+
+	buffer = kmalloc(26);
 	if(buffer == NULL)
 	{
 		panic("Error creating buffer\n");
 		return;
 	}
 
-	char* queue = kmalloc(26+27);
+	queue = kmalloc(26+27);
 	if(queue == NULL)
 	{
 		panic("Error creating queue\n");
@@ -924,5 +945,5 @@ rwt1(int nargs, char** args)
 
 
 	rwlock_destroy(test);
-
+	spinlock_cleanup(&spinner);
 }
