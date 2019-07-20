@@ -12,9 +12,15 @@
 #include <kern/test161.h>
 #include <spinlock.h>
 
+#define NOOFREADERS 27
+
 static bool test_status = TEST161_FAIL;
 struct semaphore* donetest = NULL;
-
+struct rwlock* test;
+struct spinlock spinner;
+char* buffer;
+char* queue;
+static int count = -1;
 /*
  * Use these stubs to test your reader-writer locks.
  */
@@ -26,13 +32,11 @@ there are 26 writers writing 26 alphabets into a single buffer. the readers will
 in both of the threads there will be a spinlocked queue array that appends either W or R depending on the thread.
 For checking each array[i] with queue array, we check if sizeof(array[i]) == no.of 'W' in the lengthof(q -> q[i]);
 */
-struct rwlock* test;
-char* buffer;
-char* queue;
-struct spinlock spinner;
+
 char* readers_buffer[27];
 void writer_thread(void*, unsigned long);
 void reader_thread(void*, unsigned long);
+int reader_positions[NOOFREADERS];
 
 void
 writer_thread(void *junk1, unsigned long num)
@@ -40,15 +44,17 @@ writer_thread(void *junk1, unsigned long num)
 	(void)junk1;
 
 	rwlock_acquire_write(test);
-	kprintf_t("Writer Thread %d\n",num);
+	//kprintf_n("Writer Thread %lu\n",num);
 
 	random_yielder(4);
-	queue[sizeof(queue)] = 'W';
-	kprintf_t("queue: %s\n",queue);
+	count++;
+	queue[count] = 'W';
+	//kprintf_n("queue: %s\n",queue);
 
 	random_yielder(4);
+
 	buffer[num] = 'a' + num;
-	kprintf_t("buffer: %s\n",buffer);
+	//kprintf_n("buffer: %s\n",buffer);
 	
 	rwlock_release_write(test);
 	V(donetest);
@@ -61,16 +67,18 @@ reader_thread(void* junk1, unsigned long num)
 
 	rwlock_acquire_read(test);
 	random_yielder(4);
-	kprintf_t("Reader Thread %d\n",num);
+	//kprintf_n("Reader Thread %lu\n",num);
 
 	spinlock_acquire(&spinner);
-	queue[sizeof(queue)] = 'R';
-	kprintf_t("queue: %s\n",queue);
+	count++;
+	queue[count] = 'R';
+	reader_positions[num] = count;
+	//kprintf_n("queue: %s\n",queue);
 	spinlock_release(&spinner);
 	
 	random_yielder(4);
 	readers_buffer[num] = kstrdup(buffer);
-	kprintf_t("reader)buffer[%d]: %s\n",num,readers_buffer[num]);
+	//kprintf_n("reader_buffer[%lu]: %s\n",num,readers_buffer[num]);
 	rwlock_release_read(test);
 	V(donetest);
 }
@@ -84,12 +92,15 @@ int rwtest(int nargs, char **args)
 	test = rwlock_create("rwt1");
 	donetest = sem_create("donetest",0);
 
-	buffer = kmalloc(26);
+	memset(reader_positions,0,sizeof(reader_positions));
+
+	buffer = kmalloc(26*sizeof(char));
 	if(buffer == NULL)
 	{
 		panic("Error creating buffer\n");
 		return 1;
 	}
+	memset(buffer,0,sizeof(buffer));
 
 	queue = kmalloc(26+27);
 	if(queue == NULL)
@@ -125,7 +136,7 @@ int rwtest(int nargs, char **args)
 	{
 		P(donetest);
 	}
-	int w[26+27];
+	unsigned int w[26+27];
 	memset(w,0,sizeof(w));
 	for(int i = 0; i<53;i++)
 	{
@@ -133,10 +144,11 @@ int rwtest(int nargs, char **args)
 		if(i>0) w[i]+=w[i-1];
 	}
 
-	for(int i = 0 ; i<53 ; i++)
+	
+	for(int i = 0 ; i<NOOFREADERS ; i++)
 	{
-		if(sizeof(readers_buffer[i]) != w[i])
-		{
+		if(strlen(readers_buffer[i]) != w[reader_positions[i]])
+		{	
 			test_status = TEST161_FAIL;
 			break;
 		}
