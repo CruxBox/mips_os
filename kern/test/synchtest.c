@@ -869,7 +869,7 @@ there are 26 writers writing 26 alphabets into a single buffer. the readers will
 in both of the threads there will be a spinlocked queue array that appends either W or R depending on the thread.
 For checking each array[i] with queue array, we check if sizeof(array[i]) == no.of 'W' in the lengthof(q -> q[i]);
 */
-struct rw* test;
+struct rwlock* test;
 char* buffer;
 char* queue;
 struct spinlock* spinner;
@@ -880,8 +880,12 @@ writer_thread(void *junk1, unsigned long num)
 
 	rwlock_acquire_write(test);
 	kprintf_t("Writer Thread %d\n",num);
+
+	random_yielder(4);
 	queue[sizeof(queue)] = 'W';
 	kprintf_t("queue: %s\n",queue);
+
+	random_yielder(4);
 	buffer[num] = 'a' + num;
 	kprintf_t("buffer: %s\n",buffer);
 	
@@ -889,15 +893,19 @@ writer_thread(void *junk1, unsigned long num)
 }
 
 void
-reader_thread(char* reader_buffer, unsigned long num)
+reader_thread(void* reader_buffer, unsigned long num)
 {	
 	rwlock_acquire_read(test);
+	(char*)reader_buffer;
+	random_yielder(4);
 	kprintf_t("Reader Thread %d\n",num);
+
 	spinlock_acquire(&spinner);
 	queue[sizeof(queue)] = 'R';
 	kprintf_t("queue: %s\n",queue);
 	spinlock_release(&spinner);
 	
+	random_yielder(4);
 	reader_buffer[num] = kstrdup(buffer);
 	kprintf_t("reader)buffer[%d]: %s\n",num,reader_buffer[num]);
 	rwlock_release_read(test);
@@ -905,9 +913,12 @@ reader_thread(char* reader_buffer, unsigned long num)
 }
 
 void
-rwt1(int nargs, char** args)
+rwt(int nargs, char** args)
 {	
-	spinlock_init(&spinner);
+	(void)nargs;
+	(void)args;
+	spinlock_init(spinner);
+
 	test = rwlock_create("rwt1");
 
 	buffer = kmalloc(26);
@@ -936,14 +947,14 @@ rwt1(int nargs, char** args)
 		{
 			panic("Error creating writer thread\n");
 		}
-		int result2 = thread_fork("reader_thread",NULL,reader_thread,readers_buffer,i);
+		int result2 = thread_fork("reader_thread",NULL,reader_thread,(void*)readers_buffer,i);
 		if(result2)
 		{
 			panic("Error creating reader thread\n");
 		}
 	}
 
-	int result3 = thread_fork("last reader thread",NULL,reader_thread,reader_thread,26);
+	int result3 = thread_fork("last reader thread",NULL,reader_thread,(void*)readers_buffer,26);
 	if(result3)
 	{
 		panic("Error creating reader thread\n");
@@ -965,5 +976,5 @@ rwt1(int nargs, char** args)
 	success(test_status, SECRET, "rwt1");
 
 	rwlock_destroy(test);
-	spinlock_cleanup(&spinner);
+	spinlock_cleanup(spinner);
 }

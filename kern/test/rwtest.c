@@ -20,8 +20,6 @@ int rwtest(int nargs, char **args) {
 	(void)nargs;
 	(void)args;
 
-	kprintf_n("rwt1 unimplemented\n");
-	success(TEST161_FAIL, SECRET, "rwt1");
 
 	return 0;
 }
