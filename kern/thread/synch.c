@@ -350,12 +350,13 @@ rwlock_acquire_read(struct rwlock* rw)
 {
 	//check if there is a writer that has acquired a lock
 	lock_acquire(rw->writer_lock);
-	lock_release(rw->writer_lock);
-	//this section is entered when no writer has acquired the lock
-	//this section is small
 	
 	V(rw->sem_readers);
 	rw->readers++;
+	
+	lock_release(rw->writer_lock);
+	//this section is entered when no writer has acquired the lock
+	//this section is small
 	
 }
 
@@ -363,10 +364,10 @@ void
 rwlock_release_read(struct rwlock* rw)
 {	
 	KASSERT( rw != NULL);
-	if(rw->readers == 0) return;
-	P(rw->sem_readers);
+	
 	rw->readers--;
-	//if(readers==0 call cv_signal)
+	P(rw->sem_readers);
+	
 }
 
 void
@@ -376,7 +377,10 @@ rwlock_acquire_write(struct rwlock* rw)
 	
 	lock_acquire(rw->writer_lock);
 	
-	while(rw->sem_readers->sem_count != 0);
+	while(rw->sem_readers->sem_count != 0)
+	{
+
+	}
 	
 	KASSERT( rw->readers == 0);
 

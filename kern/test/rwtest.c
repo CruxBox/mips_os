@@ -12,7 +12,7 @@
 #include <kern/test161.h>
 #include <spinlock.h>
 
-#define NOOFREADERS 27
+#define NOOFREADERS 40
 
 static bool test_status = TEST161_FAIL;
 struct semaphore* donetest = NULL;
@@ -33,7 +33,7 @@ in both of the threads there will be a spinlocked queue array that appends eithe
 For checking each array[i] with queue array, we check if sizeof(array[i]) == no.of 'W' in the lengthof(q -> q[i]);
 */
 
-char* readers_buffer[27];
+char* readers_buffer[NOOFREADERS];
 void writer_thread(void*, unsigned long);
 void reader_thread(void*, unsigned long);
 int reader_positions[NOOFREADERS];
@@ -42,19 +42,23 @@ void
 writer_thread(void *junk1, unsigned long num)
 {
 	(void)junk1;
+	static int index = 0;
+	random_yielder(4);
 
 	rwlock_acquire_write(test);
-	//kprintf_n("Writer Thread %lu\n",num);
+	kprintf_n("Writer Thread %lu\n",num);
 
 	random_yielder(4);
 	count++;
 	queue[count] = 'W';
-	//kprintf_n("queue: %s\n",queue);
+	kprintf_n("queue: %s\n",queue);
 
 	random_yielder(4);
 
-	buffer[num] = 'a' + num;
-	//kprintf_n("buffer: %s\n",buffer);
+	buffer[index] = 'a' + num;
+	index++;
+
+	kprintf_n("buffer: %s\n",buffer);
 	
 	rwlock_release_write(test);
 	V(donetest);
@@ -64,21 +68,27 @@ void
 reader_thread(void* junk1, unsigned long num)
 {	
 	(void)junk1;
+	(void)num;
+	static int index2 = 0;
+	random_yielder(4);
 
 	rwlock_acquire_read(test);
 	random_yielder(4);
-	//kprintf_n("Reader Thread %lu\n",num);
+	kprintf_n("Reader Thread %lu\n",num);
 
 	spinlock_acquire(&spinner);
 	count++;
 	queue[count] = 'R';
-	reader_positions[num] = count;
-	//kprintf_n("queue: %s\n",queue);
+
+	reader_positions[index2] = count;
+	kprintf_n("queue: %s\n",queue);
+	readers_buffer[index2] = kstrdup(buffer);
+	
+	kprintf_n("reader_buffer[%lu]: %s\n",num,readers_buffer[index2]);
+	
+	index2++;
 	spinlock_release(&spinner);
 	
-	random_yielder(4);
-	readers_buffer[num] = kstrdup(buffer);
-	//kprintf_n("reader_buffer[%lu]: %s\n",num,readers_buffer[num]);
 	rwlock_release_read(test);
 	V(donetest);
 }
@@ -102,7 +112,7 @@ int rwtest(int nargs, char **args)
 	}
 	memset(buffer,0,sizeof(buffer));
 
-	queue = kmalloc(26+27);
+	queue = kmalloc((26+NOOFREADERS)*sizeof(char));
 	if(queue == NULL)
 	{
 		panic("Error creating queue\n");
@@ -124,21 +134,30 @@ int rwtest(int nargs, char **args)
 		{
 			panic("Error creating reader thread\n");
 		}
+
+		if(i%2!=0)
+		{
+		int result2 = thread_fork("reader_thread",NULL,reader_thread,NULL,i+26);
+		if(result2)
+		{
+			panic("Error creating reader thread\n");
+		}
+		}
 	}
 
-	int result3 = thread_fork("last reader thread",NULL,reader_thread,NULL,26);
+	int result3 = thread_fork("last reader thread",NULL,reader_thread,NULL,NOOFREADERS - 1);
 	if(result3)
 	{
 		panic("Error creating reader thread\n");
 	}
 
-	for(int j = 0; j<53; j++)
+	for(int j = 0; j<(26+NOOFREADERS); j++)
 	{
 		P(donetest);
 	}
-	unsigned int w[26+27];
+	unsigned w[26+NOOFREADERS];
 	memset(w,0,sizeof(w));
-	for(int i = 0; i<53;i++)
+	for(int i = 0; i<(26+NOOFREADERS); i++)
 	{
 		if(queue[i]=='W') ++w[i];
 		if(i>0) w[i]+=w[i-1];
@@ -149,6 +168,7 @@ int rwtest(int nargs, char **args)
 	{
 		if(strlen(readers_buffer[i]) != w[reader_positions[i]])
 		{	
+			kprintf_n("strlen(readers_buffer[%d]): %d   w[%d]: %d",i,strlen(readers_buffer[i]),reader_positions[i],w[reader_positions[i]]);
 			test_status = TEST161_FAIL;
 			break;
 		}
