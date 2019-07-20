@@ -879,9 +879,11 @@ writer_thread(void *junk1, unsigned long num)
 	(void)junk1;
 
 	rwlock_acquire_write(test);
-	
+	kprintf_t("Writer Thread %d\n",num);
 	queue[sizeof(queue)] = 'W';
+	kprintf_t("queue: %s\n",queue);
 	buffer[num] = 'a' + num;
+	kprintf_t("buffer: %s\n",buffer);
 	
 	rwlock_release_write(test);
 }
@@ -890,13 +892,14 @@ void
 reader_thread(char* reader_buffer, unsigned long num)
 {	
 	rwlock_acquire_read(test);
-
+	kprintf_t("Reader Thread %d\n",num);
 	spinlock_acquire(&spinner);
 	queue[sizeof(queue)] = 'R';
+	kprintf_t("queue: %s\n",queue);
 	spinlock_release(&spinner);
 	
-	reader_buffer = kstrdup(buffer);
-	
+	reader_buffer[num] = kstrdup(buffer);
+	kprintf_t("reader)buffer[%d]: %s\n",num,reader_buffer[num]);
 	rwlock_release_read(test);
 
 }
@@ -920,8 +923,11 @@ rwt1(int nargs, char** args)
 		panic("Error creating queue\n");
 		return;
 	}
+	memset(queue,0,sizeof(queue));
 
 	char* readers_buffer[27];
+
+	test_status = TEST161_SUCCESS;
 
 	for(int i=0;i<26;i++)
 	{
@@ -943,6 +949,20 @@ rwt1(int nargs, char** args)
 		panic("Error creating reader thread\n");
 	}
 
+	int w[26+27];
+	memset(w,0,sizeof(w));
+	for(int i = 0; i<53;i++)
+	{
+		if(queue[i]=='W') ++w[i];
+		if(i>0) w[i]+=w[i-1];
+	}
+
+	for(int i = 0 ; i<53 ; i++)
+	{
+		failif(sizeof(readers_buffer[i]) != w[i]);
+	}
+
+	success(test_status, SECRET, "rwt1");
 
 	rwlock_destroy(test);
 	spinlock_cleanup(&spinner);
