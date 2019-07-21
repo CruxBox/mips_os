@@ -44,8 +44,19 @@
  * Called by the driver during initialization.
  */
 
+struct lock *global;
+struct lock *quad[4];
+
 void stoplight_init()
 {
+	//1 global lock
+	//4 locks
+	global = lock_create("global");
+
+	for (int i = 0; i < 4; i++)
+	{
+		quad[i] = lock_create("quad" + (char)i);
+	}
 	return;
 }
 
@@ -55,33 +66,73 @@ void stoplight_init()
 
 void stoplight_cleanup()
 {
+	lock_destroy(global);
+
+	for (int i = 0; i < 4; i++)
+		lock_destroy(quad[i]);
+
 	return;
 }
 
 void turnright(uint32_t direction, uint32_t index)
 {
-	(void)direction;
-	(void)index;
-	/*
-	 * Implement this function.
-	 */
+	lock_acquire(global);
+
+	lock_acquire(quad[direction]);
+
+	lock_release(global);
+
+	inQuadrant(direction, index);
+	leaveIntersection(index);
+
+	lock_release(quad[direction]);
+
 	return;
 }
+
 void gostraight(uint32_t direction, uint32_t index)
 {
-	(void)direction;
-	(void)index;
-	/*
-	 * Implement this function.
-	 */
+	lock_acquire(global);
+
+	for (uint32_t i = direction; i >= (direction - 2); i--)
+	{
+		lock_acquire(quad[i % 4]);
+	}
+	lock_release(global);
+
+	for (uint32_t i = 0; i < 3; i++)
+	{
+		inQuadrant((direction - i) % 4, index);
+	}
+	leaveIntersection(index);
+
+	for (uint32_t i = direction; i >= (direction - 2); i--)
+	{
+		lock_release(quad[i % 4]);
+	}
+
 	return;
 }
 void turnleft(uint32_t direction, uint32_t index)
 {
-	(void)direction;
-	(void)index;
-	/*
-	 * Implement this function.
-	 */
+	lock_acquire(global);
+
+	for (uint32_t i = direction; i >= (direction - 3); i--)
+	{
+		lock_acquire(quad[i % 4]);
+	}
+	lock_release(global);
+
+	for (uint32_t i = 0; i < 4; i++)
+	{
+		inQuadrant((direction - i) % 4, index);
+	}
+	leaveIntersection(index);
+
+	for (uint32_t i = direction; i >= (direction - 3); i--)
+	{
+		lock_release(quad[i % 4]);
+	}
+
 	return;
 }
