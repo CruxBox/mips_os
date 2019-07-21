@@ -355,8 +355,6 @@ rwlock_acquire_read(struct rwlock* rw)
 	rw->readers++;
 	
 	lock_release(rw->writer_lock);
-	//this section is entered when no writer has acquired the lock
-	//this section is small
 	
 }
 
@@ -367,7 +365,7 @@ rwlock_release_read(struct rwlock* rw)
 	
 	rw->readers--;
 	P(rw->sem_readers);
-	
+
 }
 
 void
