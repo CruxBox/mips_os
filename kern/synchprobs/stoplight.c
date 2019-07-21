@@ -39,6 +39,7 @@
 #include <thread.h>
 #include <test.h>
 #include <synch.h>
+#include <current.h>
 
 /*
  * Called by the driver during initialization.
@@ -49,14 +50,13 @@ struct lock *quad[4];
 
 void stoplight_init()
 {
-	//1 global lock
-	//4 locks
 	global = lock_create("global");
 
 	for (int i = 0; i < 4; i++)
 	{
 		quad[i] = lock_create("quad" + (char)i);
 	}
+
 	return;
 }
 
@@ -76,6 +76,7 @@ void stoplight_cleanup()
 
 void turnright(uint32_t direction, uint32_t index)
 {
+	kprintf_n("TURN RIGHT\n");
 	lock_acquire(global);
 
 	lock_acquire(quad[direction]);
@@ -92,11 +93,17 @@ void turnright(uint32_t direction, uint32_t index)
 
 void gostraight(uint32_t direction, uint32_t index)
 {
+	kprintf_n("GOSTRAIGHT\n");
+
 	lock_acquire(global);
 
-	for (uint32_t i = direction; i >= (direction - 2); i--)
+	int n = 2;
+	int i = direction;
+	while (n--)
 	{
-		lock_acquire(quad[i % 4]);
+		//kprintf_n("%s tries to acquire quad[%d]\n", curthread->t_name, (i + 4) % 4);
+		lock_acquire(quad[(i + 4) % 4]);
+		i--;
 	}
 	lock_release(global);
 
@@ -104,22 +111,31 @@ void gostraight(uint32_t direction, uint32_t index)
 	{
 		inQuadrant((direction - i) % 4, index);
 	}
+
 	leaveIntersection(index);
 
-	for (uint32_t i = direction; i >= (direction - 2); i--)
+	n = 2;
+	i = direction;
+	while (n--)
 	{
-		lock_release(quad[i % 4]);
+		lock_release(quad[(i + 4) % 4]);
+		i--;
 	}
 
 	return;
 }
 void turnleft(uint32_t direction, uint32_t index)
 {
+	kprintf_n("TURN LEFT\n");
 	lock_acquire(global);
 
-	for (uint32_t i = direction; i >= (direction - 3); i--)
+	int n = 3;
+	int i = direction;
+	while (n--)
 	{
-		lock_acquire(quad[i % 4]);
+		//kprintf_n("%s tries to acquire quad[%d]\n", curthread->t_name, (i + 4) % 4);
+		lock_acquire(quad[(i + 4) % 4]);
+		i--;
 	}
 	lock_release(global);
 
@@ -127,11 +143,15 @@ void turnleft(uint32_t direction, uint32_t index)
 	{
 		inQuadrant((direction - i) % 4, index);
 	}
+
 	leaveIntersection(index);
 
-	for (uint32_t i = direction; i >= (direction - 3); i--)
+	n = 3;
+	i = direction;
+	while (n--)
 	{
-		lock_release(quad[i % 4]);
+		lock_release(quad[(i + 4) % 4]);
+		i--;
 	}
 
 	return;
