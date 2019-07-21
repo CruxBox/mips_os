@@ -24,13 +24,13 @@ struct lock *lock;
 void whalemating_init()
 {
 
-	lock = lock_create('lock');
+	lock = lock_create("lock");
 
-	sem_male = sem_create('sem_male', 0);
-	sem_female = sem_create('sem_female', 0);
+	sem_male = sem_create("sem_male", 0);
+	sem_female = sem_create("sem_female", 0);
 
-	cv_male = cv_create('cv_male');
-	cv_female = cv_create('cv_female');
+	cv_male = cv_create("cv_male");
+	cv_female = cv_create("cv_female");
 
 	return;
 }

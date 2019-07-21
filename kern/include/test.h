@@ -13,7 +13,6 @@
  * functions.
  */
 
-
 /*
  * Test code.
  */
@@ -79,7 +78,7 @@ int createstress(int, char **);
 int printfile(int, char **);
 
 /* HMAC/hash tests */
-int hmacu1(int, char**);
+int hmacu1(int, char **);
 
 /* other tests */
 int kmalloctest(int, char **);
@@ -98,11 +97,11 @@ void menu(char *argstr);
 /* The main function, called from start.S. */
 void kmain(char *bootstring);
 
-#if OPT_SYNCHPROBS
-
 /*
  * Synchronization driver primitives.
  */
+
+#if OPT_SYNCHPROBS
 
 void male_start(uint32_t);
 void male_end(uint32_t);
@@ -139,7 +138,6 @@ void turnleft(uint32_t, uint32_t);
 void turnright(uint32_t, uint32_t);
 void stoplight_init(void);
 void stoplight_cleanup(void);
-
 #endif
 
 /*
@@ -167,6 +165,9 @@ void random_spinner(uint32_t);
 #define kprintf_n(...) kprintf(__VA_ARGS__)
 #endif
 
-static inline void silent(const char * fmt, ...) { (void)fmt; };
+static inline void silent(const char *fmt, ...)
+{
+    (void)fmt;
+};
 
 #endif /* _TEST_H_ */
