@@ -98,16 +98,15 @@ void gostraight(uint32_t direction, uint32_t index)
 	lock_acquire(global);
 
 	int n = 2;
-	int i = direction;
+	int i = 0;
 	while (n--)
 	{
-		//kprintf_n("%s tries to acquire quad[%d]\n", curthread->t_name, (i + 4) % 4);
-		lock_acquire(quad[(i + 4) % 4]);
-		i--;
+		lock_acquire(quad[(direction - i) % 4]);
+		i++;
 	}
 	lock_release(global);
 
-	for (uint32_t i = 0; i < 3; i++)
+	for (uint32_t i = 0; i < 2; i++)
 	{
 		inQuadrant((direction - i) % 4, index);
 	}
@@ -115,11 +114,11 @@ void gostraight(uint32_t direction, uint32_t index)
 	leaveIntersection(index);
 
 	n = 2;
-	i = direction;
+	i = 0;
 	while (n--)
 	{
-		lock_release(quad[(i + 4) % 4]);
-		i--;
+		lock_release(quad[(direction - i) % 4]);
+		i++;
 	}
 
 	return;
@@ -130,16 +129,15 @@ void turnleft(uint32_t direction, uint32_t index)
 	lock_acquire(global);
 
 	int n = 3;
-	int i = direction;
+	int i = 0;
 	while (n--)
 	{
-		//kprintf_n("%s tries to acquire quad[%d]\n", curthread->t_name, (i + 4) % 4);
-		lock_acquire(quad[(i + 4) % 4]);
-		i--;
+		lock_acquire(quad[(direction - i) % 4]);
+		i++;
 	}
 	lock_release(global);
 
-	for (uint32_t i = 0; i < 4; i++)
+	for (uint32_t i = 0; i < 3; i++)
 	{
 		inQuadrant((direction - i) % 4, index);
 	}
@@ -147,11 +145,11 @@ void turnleft(uint32_t direction, uint32_t index)
 	leaveIntersection(index);
 
 	n = 3;
-	i = direction;
+	i = 0;
 	while (n--)
 	{
-		lock_release(quad[(i + 4) % 4]);
-		i--;
+		lock_release(quad[(direction - i) % 4]);
+		i++;
 	}
 
 	return;
