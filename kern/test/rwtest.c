@@ -178,6 +178,9 @@ int rwtest(int nargs, char **args)
 
 	rwlock_destroy(test);
 	spinlock_cleanup(&spinner);
+	kfree(buffer);
+	kfree(readers_buffer);
+	kfree(queue);
 
 	return 0;
 }
