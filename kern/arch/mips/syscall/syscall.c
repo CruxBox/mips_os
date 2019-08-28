@@ -1,4 +1,3 @@
-
 #include <types.h>
 #include <kern/errno.h>
 #include <kern/syscall.h>
@@ -79,8 +78,9 @@ void syscall(struct trapframe *tf)
 		err = sys___time((userptr_t)tf->tf_a0,
 						 (userptr_t)tf->tf_a1);
 		break;
-
-		/* Add stuff here */
+  case SYS_getpid:
+    err = sys_getpid(&retval);
+    break;
 
 	default:
 		kprintf("Unknown syscall %d\n", callno);
