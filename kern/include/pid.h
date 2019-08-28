@@ -1,10 +1,18 @@
 #ifndef _PID_H_
 #define _PID_H_
 
-int pid_setup();
+struct pid
+{
+    pid_t pid;
+    pid_t t_pid;
+    pid_t ppid;
+    struct thread *thread;
+};
 
-int pid_alloc(struct proc*);
+void pid_bootstrap();
 
-int pid_dealloc();
+int pid_alloc(struct thread *);
+
+int pid_dealloc(struct thread *);
 
 #endif

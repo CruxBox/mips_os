@@ -22,6 +22,7 @@
 #include <kern/test161.h>
 #include <version.h>
 #include "autoconf.h" // for pseudoconfig
+#include <pid.h>
 
 /*
  * These two pieces of data are maintained by the makefiles and build system.
@@ -74,6 +75,7 @@ boot(void)
 	kprintf("\n");
 
 	/* Early initialization. */
+	pid_bootstrap();
 	ram_bootstrap();
 	proc_bootstrap();
 	thread_bootstrap();

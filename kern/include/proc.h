@@ -42,11 +42,7 @@ struct proc
 	/* VFS */
 	struct vnode *p_cwd; /* current working directory */
 
-	pid_t parent_pid;
-
 	bool exited;
-
-	int exit_code;
 	/* add more material here as needed */
 };
 

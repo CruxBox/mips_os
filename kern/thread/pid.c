@@ -6,53 +6,59 @@
 #include <synch.h>
 #define MAX_NO_PID 256
 
-static uint16_t *pids[MAX_NO_PID];
-struct lock pid_array;
+struct pid* pids[MAX_NO_PID];
+struct lock* pid_lock;
 
-int pid_setup()
+void pid_bootstrap()
 {
 
-    for (uint16_t i = 0; i < MAX_NO_PID; i++)
+    pid_lock = lock_create("pid_lock");
+
+    if (pid_lock == NULL)
     {
-        pids[i] = 0;
+        panic("pid lock not created\n");
     }
 
-    pid_array = lock_create("pid_lock");
+    for (uint16_t i = 1; i < MAX_NO_PID; i++)
+    {
+        pids[i] = NULL;
+    }
 }
 int pid_alloc(struct thread *th)
 {
-    lock_acquire(&pid_array);
+    lock_acquire(&pid_lock);
     uint16_t i;
 
-    for (i = 0; i < MAX_NO_PID; i++)
+    for (i = 1; i < MAX_NO_PID; i++)
     {
         if (pids[i] != NULL)
         {
             pids[i] = 1;
             th->t_pid = i;
-            break;
+
+            lock_release(&pid_lock);
+
+            return i;
         }
     }
-
-    if (i == MAX_NO_PID)
-    {
-        lock_release(&pid_array);
-        panic('Cannot create more pids\n');
-    }
-
-    lock_release(&pid_array);
+    //Shouldn't reach here.
+    lock_release(&pid_lock);
+    panic('Cannot create more pids\n');
 }
 
-int pid_dealloc(struct thread *th)
+void pid_dealloc(struct thread *th)
 {
     uint16_t i;
-    lock_acquire(&pid_array);
+    lock_acquire(&pid_lock);
 
     i = th->t_pid;
+
+    if (i < 0 || i >= MAX_NO_PID)
+        panic("Invalid range of pid\n");
+
     pids[i] = 0;
 
     th->t_pid = -1;
 
-    lock_release(&pid_array);
+    lock_release(&pid_lock);
 }
-
