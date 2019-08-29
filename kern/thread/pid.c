@@ -1,7 +1,7 @@
 #include <types.h>
 #include <spinlock.h>
-#include <current.h>
 #include <thread.h>
+#include <current.h>
 #include <proc.h>
 #include <synch.h>
 #include <pid.h>

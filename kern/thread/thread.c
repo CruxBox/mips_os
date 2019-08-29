@@ -106,9 +106,6 @@ thread_create(const char *name)
 		return NULL;
 	}
 
-	/* Thread ID */
-	thread->t_pid = INVALID_ID;
-
 	strcpy(thread->t_name, name);
 	thread->t_wchan_name = "NEW";
 	thread->t_state = S_READY;
@@ -128,6 +125,9 @@ thread_create(const char *name)
 	thread->t_iplhigh_count = 1; /* corresponding to t_curspl */
 
 	/* If you add to struct thread, be sure to initialize here */
+
+	/* Thread ID */
+	thread->t_pid = INVALID_ID;
 
 	return thread;
 }
@@ -356,6 +356,7 @@ void thread_shutdown(void)
  */
 void thread_bootstrap(void)
 {
+	pid_bootstrap();
 	cpuarray_init(&allcpus);
 	struct cpu *bootcpu;
 	struct thread *bootthread;
@@ -370,8 +371,6 @@ void thread_bootstrap(void)
 	KASSERT(CURCPU_EXISTS() == false);
 
 	bootcpu = cpu_create(0);
-
-	pid_bootstrap();
 	bootthread = bootcpu->c_curthread;
 	bootthread->t_pid = BOOTPROC_ID;
 
@@ -400,6 +399,16 @@ void cpu_hatch(unsigned software_number)
 	KASSERT(curcpu != NULL);
 	KASSERT(curthread != NULL);
 	KASSERT(curcpu->c_number == software_number);
+
+	int result;
+
+	curthread->t_pid = BOOTPROC_ID;
+	result = pid_alloc(INVALID_ID);
+
+	if (result == INVALID_ID)
+	{
+		panic("Other cpus' pid allocation issue.\n");
+	}
 
 	spl0();
 	cpu_identify(buf, sizeof(buf));
