@@ -88,6 +88,7 @@ struct thread
 	 */
 
 	/* add more here as needed */
+	pid_t t_pid;
 };
 
 /*

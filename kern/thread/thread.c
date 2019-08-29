@@ -259,7 +259,7 @@ thread_destroy(struct thread *thread)
 	/* Thread subsystem fields */
 	KASSERT(thread->t_proc == NULL);
 
-	pid_dealloc(thread);
+	pid_dealloc(thread->t_pid);
 
 	if (thread->t_stack != NULL)
 	{
@@ -363,7 +363,7 @@ void thread_bootstrap(void)
 	 * might be updated later by mainbus-type code. This also
 	 * creates a thread structure for the first thread, the one
 	 * that's already implicitly running when the kernel is
-	 * started from the bootloader.
+	 * startedstarted from the bootloader.
 	 */
 	KASSERT(CURCPU_EXISTS() == false);
 	(void)cpu_create(0);
@@ -374,7 +374,7 @@ void thread_bootstrap(void)
 	KASSERT(curthread != NULL);
 	KASSERT(curthread->t_proc != NULL);
 	KASSERT(curthread->t_proc == kproc);
-
+	pid_bootstrap();
 	/* Done */
 }
 
@@ -504,7 +504,7 @@ int thread_fork(const char *name,
 	{
 		return ENOMEM;
 	}
-
+	newthread->t_pid = pid_alloc(curthread->t_pid);
 	/* Allocate a stack */
 	newthread->t_stack = kmalloc(STACK_SIZE);
 	if (newthread->t_stack == NULL)
