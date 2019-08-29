@@ -357,7 +357,8 @@ void thread_shutdown(void)
 void thread_bootstrap(void)
 {
 	cpuarray_init(&allcpus);
-
+	struct cpu *bootcpu;
+	struct thread *bootthread;
 	/*
 	 * Create the cpu structure for the bootup CPU, the one we're
 	 * currently running on. Assume the hardware number is 0; that
@@ -367,8 +368,13 @@ void thread_bootstrap(void)
 	 * startedstarted from the bootloader.
 	 */
 	KASSERT(CURCPU_EXISTS() == false);
+
+	bootcpu = cpu_create(0);
+
 	pid_bootstrap();
-	(void)cpu_create(0);
+	bootthread = bootcpu->c_curthread;
+	bootthread->t_pid = BOOTPROC_ID;
+
 	KASSERT(CURCPU_EXISTS() == true);
 
 	/* cpu_create() should also have set t_proc. */

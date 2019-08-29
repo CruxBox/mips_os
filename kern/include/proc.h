@@ -42,7 +42,7 @@ struct proc
 	/* VFS */
 	struct vnode *p_cwd; /* current working directory */
 
-	bool exited;
+	volatile bool exited;
 	/* add more material here as needed */
 };
 

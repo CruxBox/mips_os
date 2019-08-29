@@ -10,7 +10,7 @@ struct pid
     pid_t p_pid; //holds the parent process id, default is INVALID_ID
 };
 
-void pid_create(pid_t p_pid, int index);
+struct pid *pid_create(pid_t p_pid, int index);
 
 void pid_bootstrap(void);
 

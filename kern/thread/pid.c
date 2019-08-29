@@ -11,18 +11,18 @@
 static struct pid *pids[MAX_NO_PID];
 static struct lock *pid_lock;
 
-void pid_create(pid_t p_pid, int index)
+struct pid *pid_create(pid_t p_pid, int index)
 {
-    //KASSERT(!(index < 1 || index < MAX_NO_PID));
+    KASSERT(!(index < 1 || index >= MAX_NO_PID));
 
-    struct pid *temp = pids[index];
+    struct pid *temp = kmalloc(sizeof(struct pid));
 
     KASSERT(temp != NULL);
 
     temp->pid = index;
     temp->p_pid = p_pid;
 
-    pids[index] = temp;
+    return temp;
 }
 
 void pid_bootstrap()
@@ -34,19 +34,14 @@ void pid_bootstrap()
     {
         panic("pid lock not created\n");
     }
-
-    lock_acquire(pid_lock);
+    /* No need to call the lock. It's bootstrap process so no process will be interfering anyway */
 
     for (uint16_t i = 0; i < MAX_NO_PID; i++)
     {
         pids[i] = NULL;
     }
 
-    pid_create(INVALID_ID, BOOTPROC_ID);
-
-    curthread->t_pid = BOOTPROC_ID;
-
-    lock_release(pid_lock);
+    pids[BOOTPROC_ID] = pid_create(INVALID_ID, BOOTPROC_ID);
 }
 
 int pid_alloc(pid_t p_pid)
@@ -58,7 +53,7 @@ int pid_alloc(pid_t p_pid)
     {
         if (pids[i] == NULL)
         {
-            pid_create(p_pid, i);
+            pids[i] = pid_create(p_pid, i);
 
             lock_release(pid_lock);
 
@@ -80,7 +75,10 @@ void pid_dealloc(pid_t pid)
 
     KASSERT(pid != INVALID_ID);
 
-    pids[pid] = NULL;
+    struct pid *temp = pids[pid];
 
+    kfree(temp);
+
+    pids[pid] = NULL;
     lock_release(pid_lock);
 }
