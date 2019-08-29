@@ -333,6 +333,7 @@ file      thread/spinlock.c
 file      thread/synch.c
 file      thread/thread.c
 file      thread/threadlist.c
+file      thread/pid.c
 file      userprograms_calls/getpid_call.c
 
 defoption hangman

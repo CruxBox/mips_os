@@ -106,7 +106,8 @@ thread_create(const char *name)
 		return NULL;
 	}
 
-	thread->t_pid = pid_alloc(thread);
+	/* Thread ID */
+	thread->t_pid = INVALID_ID;
 
 	strcpy(thread->t_name, name);
 	thread->t_wchan_name = "NEW";
@@ -366,6 +367,7 @@ void thread_bootstrap(void)
 	 * startedstarted from the bootloader.
 	 */
 	KASSERT(CURCPU_EXISTS() == false);
+	pid_bootstrap();
 	(void)cpu_create(0);
 	KASSERT(CURCPU_EXISTS() == true);
 
@@ -374,7 +376,6 @@ void thread_bootstrap(void)
 	KASSERT(curthread != NULL);
 	KASSERT(curthread->t_proc != NULL);
 	KASSERT(curthread->t_proc == kproc);
-	pid_bootstrap();
 	/* Done */
 }
 
@@ -504,7 +505,7 @@ int thread_fork(const char *name,
 	{
 		return ENOMEM;
 	}
-	newthread->t_pid = pid_alloc(curthread->t_pid);
+
 	/* Allocate a stack */
 	newthread->t_stack = kmalloc(STACK_SIZE);
 	if (newthread->t_stack == NULL)
@@ -513,6 +514,15 @@ int thread_fork(const char *name,
 		return ENOMEM;
 	}
 	thread_checkstack_init(newthread);
+
+	/* Thread id */
+	newthread->t_pid = pid_alloc(curthread->t_pid);
+
+	if (newthread->t_pid == INVALID_ID)
+	{
+		thread_destroy(newthread);
+		return ENPROC;
+	}
 
 	/*
 	 * Now we clone various fields from the parent thread.
@@ -808,6 +818,10 @@ void thread_exit(void)
 
 	/* Check the stack guard band. */
 	thread_checkstack(cur);
+
+	/*Remove t_pid */
+	KASSERT(curthread->t_pid != INVALID_ID);
+	pid_dealloc(curthread->t_pid);
 
 	// Decrement the thread count and notify anyone interested.
 	if (thread_count)

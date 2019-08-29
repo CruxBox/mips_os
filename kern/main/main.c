@@ -75,14 +75,12 @@ boot(void)
 	kprintf("\n");
 
 	/* Early initialization. */
-	pid_bootstrap();
 	ram_bootstrap();
 	proc_bootstrap();
 	thread_bootstrap();
 	hardclock_bootstrap();
 	vfs_bootstrap();
 	kheap_nextgeneration();
-
 	/* Probe and initialize devices. Interrupts should come on. */
 	kprintf("Device probe...\n");
 	KASSERT(curthread->t_curspl > 0);
