@@ -19,4 +19,8 @@ File descriptors are integers that map to the array-fileHandler
 
 ### Helper functions:
 - Function to return available fd
-- 
+- Fuction to do deep-copy of table (for fork)
+
+Since we are in kernel space, copyinout is not required. Which other function to use?V
+
+
