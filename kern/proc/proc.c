@@ -56,6 +56,8 @@ proc_create(const char *name)
 
 	proc->exited = false;
 
+	memset(proc->file_table,'\0',sizeof(proc->file_table));
+
 	return proc;
 }
 
@@ -141,6 +143,10 @@ void proc_destroy(struct proc *proc)
 		}
 		as_destroy(as);
 	}
+
+	/*
+		Destroy the file table
+	*/
 	proc->exited = true;
 
 	KASSERT(proc->p_numthreads == 0);

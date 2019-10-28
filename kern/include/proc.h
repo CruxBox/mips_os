@@ -30,6 +30,17 @@ struct vnode;
  * thread_switch needs to be able to fetch the current address space
  * without sleeping.
  */
+
+#define MAXHANDLES 128
+
+
+struct file_handle_node{
+
+	char* seeker;
+	struct vnode* file_object;
+	struct rwlock lock;
+	
+};
 struct proc
 {
 	char *p_name;			/* Name of this process */
@@ -43,7 +54,9 @@ struct proc
 	struct vnode *p_cwd; /* current working directory */
 
 	volatile bool exited;
-	/* add more material here as needed */
+
+  // adding file handler array aka file table
+  struct file_handle_node file_table[MAXHANDLES];
 };
 
 /* This is the process structure for the kernel and for kernel-only threads. */
