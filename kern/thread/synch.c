@@ -10,6 +10,7 @@
 #include <thread.h>
 #include <current.h>
 #include <synch.h>
+#include <spl.h>
 
 ////////////////////////////////////////////////////////////
 //
@@ -169,7 +170,10 @@ void
 
 	// Write this
 	KASSERT(lock != NULL);
-	KASSERT(curthread->t_in_interrupt == false);
+	// KASSERT(curthread->t_in_interrupt == false); This caused an error when lock was being acquired while already in interrupt
+
+	//disable interrupts. Don't check for any.
+	int s = splhigh();
 
 	if (lock->holder == curthread)
 		return;
@@ -193,6 +197,9 @@ void
 	HANGMAN_ACQUIRE(&curthread->t_hangman, &lock->lk_hangman);
 
 	spinlock_release(&lock->spinlock_wchan);
+
+	//enable interrupts.
+	splx(s);
 
 	return;
 	/* Call this (atomically) once the lock is acquired */

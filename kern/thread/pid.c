@@ -10,6 +10,7 @@
 
 static struct pid *pids[MAX_NO_PID];
 static struct lock *pid_lock;
+static uint16_t available = 2;
 
 struct pid *pid_create(pid_t p_pid, int index)
 {
@@ -47,6 +48,14 @@ void pid_bootstrap()
 int pid_alloc(pid_t p_pid)
 {
     lock_acquire(pid_lock);
+    
+    if( pids[available] == NULL){
+        pids[available] = pid_create(p_pid,available);
+        lock_release(pid_lock);
+
+        return available++;
+    }
+
     uint16_t i;
 
     for (i = 2; i < MAX_NO_PID; i++)
@@ -54,6 +63,8 @@ int pid_alloc(pid_t p_pid)
         if (pids[i] == NULL)
         {
             pids[i] = pid_create(p_pid, i);
+
+            available = i + 1;
 
             lock_release(pid_lock);
 
@@ -80,5 +91,6 @@ void pid_dealloc(pid_t pid)
     kfree(temp);
 
     pids[pid] = NULL;
+
     lock_release(pid_lock);
 }

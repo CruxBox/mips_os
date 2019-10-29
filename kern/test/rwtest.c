@@ -179,7 +179,6 @@ int rwtest(int nargs, char **args)
 	spinlock_cleanup(&spinner);
 	kfree(buffer);
 	kfree(queue);
-  kfree(reader_positions);
 	return 0;
 }
 

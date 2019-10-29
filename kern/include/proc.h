@@ -35,12 +35,13 @@ struct vnode;
 
 
 struct file_handle_node{
-
-	char* seeker;
-	struct vnode* file_object;
-	struct rwlock lock;
+  
+	struct rwlock *lock;
+  char* seeker;
+  struct vnode* file_object;
 	
 };
+
 struct proc
 {
 	char *p_name;			/* Name of this process */
