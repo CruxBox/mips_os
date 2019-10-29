@@ -56,7 +56,12 @@ proc_create(const char *name)
 
 	proc->exited = false;
 
-	memset(proc->file_table,'\0',sizeof(proc->file_table));
+	for(int i=0;i<MAXHANDLES;i++){
+		proc->file_handle_node[i]->lock = rwlock_create("lock"+i);
+	}
+
+	proc->seeker = NULL;
+	proc->vnode = NULL;
 
 	return proc;
 }
@@ -149,6 +154,12 @@ void proc_destroy(struct proc *proc)
 	*/
 	proc->exited = true;
 
+	for(int i=0;i<MAXHANDLES;i++){
+		rwlock_destroy(proc->file_handle_node[i]->lock);
+	}
+	proc->seeker = NULL;
+	proc->vnode = NULL;
+	
 	KASSERT(proc->p_numthreads == 0);
 	spinlock_cleanup(&proc->p_lock);
 
