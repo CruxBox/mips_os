@@ -334,7 +334,6 @@ file      thread/synch.c
 file      thread/thread.c
 file      thread/threadlist.c
 file      thread/pid.c
-file      userprograms_calls/getpid_call.c
 
 defoption hangman
 optfile   hangman thread/hangman.c
@@ -389,6 +388,7 @@ file      vfs/devnull.c
 file      syscall/loadelf.c
 file      syscall/runprogram.c
 file      syscall/time_syscalls.c
+file      syscall/getpid_call.c
 
 #
 # Startup and initialization

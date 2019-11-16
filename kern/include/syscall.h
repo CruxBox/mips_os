@@ -30,6 +30,14 @@ __DEAD void enter_new_process(int argc, userptr_t argv, userptr_t env,
 int sys_reboot(int code);
 int sys___time(userptr_t user_seconds, userptr_t user_nanoseconds);
 
-//getpid()
+/*
+* process calls
+*/
 int sys_getpid(pid_t*);
+
+/*
+* file calls
+*/
+
+int sys_open(const char* filename, int flags);
 #endif /* _SYSCALL_H_ */
