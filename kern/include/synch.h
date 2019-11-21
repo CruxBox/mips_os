@@ -129,7 +129,7 @@ struct rwlock
         char *rwlock_name;
         struct semaphore* sem_readers;
         struct lock* writer_lock;
-        volatile int readers;
+        struct cv* cv_writer;
 };
 
 struct rwlock *rwlock_create(const char *);

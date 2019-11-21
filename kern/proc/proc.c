@@ -19,6 +19,7 @@
 #include <current.h>
 #include <addrspace.h>
 #include <vnode.h>
+#include <synch.h>
 
 /*
  * The process for the kernel; this holds all the kernel-only threads.
@@ -57,15 +58,21 @@ proc_create(const char *name)
 	proc->exited = false;
 
 	for(int i=0;i<MAXHANDLES;i++){
-		proc->file_handle_node[i]->lock = rwlock_create("lock"+i);
+		proc->file_table[i].lock = rwlock_create("lock"+i);
+		proc->file_table[i].seeker = NULL;
+		proc->file_table[i].file_object = NULL;
 	}
-
-	proc->seeker = NULL;
-	proc->vnode = NULL;
 
 	return proc;
 }
 
+int get_fd(struct proc *proc){
+	for(int i=0;i<MAXHANDLES;i++){
+		if(proc->file_table[i].file_object == NULL) return i;
+	}
+
+	return -1;
+}
 /*
  * Destroy a proc structure.
  *
@@ -155,10 +162,10 @@ void proc_destroy(struct proc *proc)
 	proc->exited = true;
 
 	for(int i=0;i<MAXHANDLES;i++){
-		rwlock_destroy(proc->file_handle_node[i]->lock);
+		rwlock_destroy(proc->file_table[i].lock);
+		proc->file_table[i].seeker = NULL;
+		proc->file_table[i].file_object = NULL;
 	}
-	proc->seeker = NULL;
-	proc->vnode = NULL;
 	
 	KASSERT(proc->p_numthreads == 0);
 	spinlock_cleanup(&proc->p_lock);

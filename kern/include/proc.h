@@ -66,6 +66,9 @@ extern struct proc *kproc;
 /* Call once during system startup to allocate data structures. */
 void proc_bootstrap(void);
 
+/* get the free file descriptor in the process. Returns -1 if no fd found. */
+int get_fd(struct proc *proc);
+
 /* Create a fresh process for use by runprogram(). */
 struct proc *proc_create_runprogram(const char *name);
 

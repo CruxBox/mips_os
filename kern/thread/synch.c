@@ -175,8 +175,10 @@ void
 	//disable interrupts. Don't check for any.
 	int s = splhigh();
 
-	if (lock->holder == curthread)
+	if (lock->holder == curthread){
+		splx(s);
 		return;
+	}
 
 	spinlock_acquire(&lock->spinlock_wchan);
 
@@ -289,7 +291,7 @@ void
 
 	spinlock_acquire(&cv->spinlock_wchan);
 
-		lock_release(lock);
+	lock_release(lock);
 
 	wchan_sleep(waitlist, &cv->spinlock_wchan);
 
@@ -338,7 +340,7 @@ rwlock_create(const char* name)
 
 	rwlock_new->writer_lock = lock_create(name);
 
-	rwlock_new->readers = 0;
+	rwlock_new->cv_writer = cv_create(name);
 
 	return rwlock_new;
 }
@@ -348,6 +350,8 @@ rwlock_destroy (struct rwlock* rw)
 {
 	sem_destroy(rw->sem_readers);
 	lock_destroy(rw->writer_lock);
+	cv_destroy(rw->cv_writer);
+
 	kfree(rw->rwlock_name);
 	kfree(rw);
 }
@@ -355,11 +359,11 @@ rwlock_destroy (struct rwlock* rw)
 void
 rwlock_acquire_read(struct rwlock* rw)
 {
+	KASSERT( rw != NULL);
 	//check if there is a writer that has acquired a lock
 	lock_acquire(rw->writer_lock);
 	
 	V(rw->sem_readers);
-	rw->readers++;
 	
 	lock_release(rw->writer_lock);
 	
@@ -370,9 +374,14 @@ rwlock_release_read(struct rwlock* rw)
 {	
 	KASSERT( rw != NULL);
 	
-	rw->readers--;
+	lock_acquire(rw->writer_lock);
+
 	P(rw->sem_readers);
 
+	if(rw->sem_readers->sem_count == 0){
+		cv_signal(rw->cv_writer, rw->writer_lock);
+	}
+	lock_release(rw->writer_lock);
 }
 
 void
@@ -384,10 +393,8 @@ rwlock_acquire_write(struct rwlock* rw)
 	
 	while(rw->sem_readers->sem_count != 0)
 	{
-
+		cv_wait(rw->cv_writer,rw->writer_lock);
 	}
-	
-	KASSERT( rw->readers == 0);
 
 }
 
