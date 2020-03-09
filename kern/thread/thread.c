@@ -129,6 +129,13 @@ thread_create(const char *name)
 	/* Thread ID */
 	thread->t_pid = INVALID_ID;
 
+	for(int i=0;i<MAXHANDLES;i++){
+		thread->file_table[i].lock = lock_create("lock"+i);
+		thread->file_table[i].seeker = NULL;
+		thread->file_table[i].file_object = NULL;
+		thread->file_table[i].ref_count = 0;
+	}
+
 	return thread;
 }
 
@@ -266,6 +273,16 @@ thread_destroy(struct thread *thread)
 	{
 		kfree(thread->t_stack);
 	}
+
+	/*
+		Destroy the file table
+	*/
+	for(int i=0;i<MAXHANDLES;i++){
+		lock_destroy(thread->file_table[i].lock);
+		thread->file_table[i].seeker = NULL;
+		thread->file_table[i].file_object = NULL;
+	}
+
 	threadlistnode_cleanup(&thread->t_listnode);
 	thread_machdep_cleanup(&thread->t_machdep);
 
@@ -273,6 +290,15 @@ thread_destroy(struct thread *thread)
 	thread->t_wchan_name = "DESTROYED";
 
 	kfree(thread);
+}
+
+
+int get_fd(struct thread *t){
+	for(int i=3;i<MAXHANDLES;i++){
+		if(t->file_table[i].file_object == NULL) return i;
+	}
+
+	return -1;
 }
 
 /*

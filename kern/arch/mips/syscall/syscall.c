@@ -70,6 +70,14 @@ void syscall(struct trapframe *tf)
 
 	switch (callno)
 	{
+	case SYS__exit:
+		err = 0;
+		break;
+
+	case SYS_write:
+		err = sys_write(tf->tf_a0, (userptr_t)tf->tf_a1, tf->tf_a2);
+		break;
+
 	case SYS_reboot:
 		err = sys_reboot(tf->tf_a0);
 		break;
@@ -83,7 +91,7 @@ void syscall(struct trapframe *tf)
 		break;
 
 	case SYS_open:
-		err = sys_open();
+		err = sys_open((const char*)tf->tf_a0, (int)tf->tf_a1, &retval);
 		break;
 
 	default:

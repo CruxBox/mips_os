@@ -1,7 +1,7 @@
 #ifndef _SYSCALL_H_
 #define _SYSCALL_H_
 
-
+#include <types.h>
 #include <cdefs.h> /* for __DEAD */
 struct trapframe; /* from <machine/trapframe.h> */
 
@@ -38,6 +38,6 @@ int sys_getpid(pid_t*);
 /*
 * file calls
 */
-
-int sys_open(const char* filename, int flags);
+int sys_write(int fd, const void *buf, size_t buflen);
+int sys_open(const char* filename, int flags, int* retval);
 #endif /* _SYSCALL_H_ */

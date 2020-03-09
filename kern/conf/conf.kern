@@ -389,7 +389,8 @@ file      syscall/loadelf.c
 file      syscall/runprogram.c
 file      syscall/time_syscalls.c
 file      syscall/getpid_call.c
-
+file      syscall/open.c
+file      syscall/write.c
 #
 # Startup and initialization
 #

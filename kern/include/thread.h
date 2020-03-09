@@ -27,6 +27,17 @@ struct cpu;
 /* Macro to test if two addresses are on the same kernel stack */
 #define SAME_STACK(p1, p2) (((p1)&STACK_MASK) == ((p2)&STACK_MASK))
 
+#define MAXHANDLES 128
+
+
+struct file_handle_node{
+  
+	struct lock *lock;
+  	char* seeker;
+  	struct vnode* file_object;
+	int ref_count;
+};
+
 /* States a thread can be in. */
 typedef enum
 {
@@ -89,6 +100,9 @@ struct thread
 
 	/* add more here as needed */
 	pid_t t_pid;
+
+	// adding file handler array aka file table
+    struct file_handle_node file_table[MAXHANDLES];
 };
 
 /*
@@ -139,6 +153,9 @@ __DEAD void thread_exit(void);
  * Interrupts need not be disabled.
  */
 void thread_yield(void);
+
+/* get the free file descriptor in the process. Returns -1 if no fd found. */
+int get_fd(struct thread *t);
 
 /*
  * Reshuffle the run queue. Called from the timer interrupt.
