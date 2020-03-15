@@ -2,18 +2,18 @@
 #include <types.h>
 #include <syscall.h>
 #include <kern/fcntl.h>
-#include <uio.h>
 #include <vfs.h>
-#include <thread.h>
 #include <current.h>
 #include <synch.h>
 #include <kern/errno.h>
-
+#include <proc.h>
+#include <copyinout.h>
 int
 sys_open(const char* file_path, int flags, int* retval)
 {
 
 	struct vnode* vn;
+	int fd;
 
 	if(file_path == NULL){
 		return EFAULT;
@@ -37,18 +37,20 @@ sys_open(const char* file_path, int flags, int* retval)
 		return result;
 	}
 
-	int fd = get_fd(curproc->table);
+	fd = get_fd(curproc->table);
 	if(fd == EMFILE){
 		kfree(filename);
-		return 
+		return EMFILE;
 	}
 
-	result = file_handle_create(&(curproc->table[fd]), vn, 0, flags);
+	result = file_handle_create(&(curproc->table->handles[fd]), vn, 0, flags);
 
 	if(result){
 		*retval = -1;
 		return result;
 	}
+
+	kfree(filename);
 
 	return 0;
 }

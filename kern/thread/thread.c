@@ -129,8 +129,6 @@ thread_create(const char *name)
 	/* Thread ID */
 	thread->t_pid = INVALID_ID;
 
-	file_table_init(&(thread->table));
-
 	return thread;
 }
 
@@ -268,11 +266,7 @@ thread_destroy(struct thread *thread)
 	{
 		kfree(thread->t_stack);
 	}
-
-	/*
-		Destroy the file table
-	*/
-
+	
 	threadlistnode_cleanup(&thread->t_listnode);
 	thread_machdep_cleanup(&thread->t_machdep);
 
