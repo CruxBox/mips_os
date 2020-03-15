@@ -19,7 +19,7 @@ int file_table_init(struct file_table** table);
 
 int file_table_destroy(struct file_table* table);
 
-int get_fd(struct file_table* table);
+int get_fd(struct file_table* table, int* fd);
 
 int next_fd_calculate(int current);
 

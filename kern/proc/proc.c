@@ -57,7 +57,12 @@ proc_create(const char *name)
 
 	proc->exited = false;
 
-	file_table_init(&(proc->table));
+	int result;
+	result = file_table_init(&(proc->table));
+	if(result){
+		kfree(proc);
+		return NULL;
+	}
 
 	return proc;
 }

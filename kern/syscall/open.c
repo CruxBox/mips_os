@@ -13,7 +13,6 @@ sys_open(const char* file_path, int flags, int* retval)
 {
 
 	struct vnode* vn;
-	int fd;
 
 	if(file_path == NULL){
 		return EFAULT;
@@ -28,25 +27,30 @@ sys_open(const char* file_path, int flags, int* retval)
 	int result = copyinstr((const_userptr_t)file_path, filename, strlen(file_path)+1, NULL);
 	if(result){
 		*retval = -1;
+		kfree(filename);		
 		return result;
 	}
 	
 	result = vfs_open(filename, flags, 0, &vn);
 	if(result){
 		*retval = -1;
+		kfree(filename);
 		return result;
 	}
 
-	fd = get_fd(curproc->table);
-	if(fd == EMFILE){
+	result = get_fd(curproc->table, retval);
+	if(result){
+		*retval = -1;
 		kfree(filename);
-		return EMFILE;
+		return result;
 	}
 
-	result = file_handle_create(&(curproc->table->handles[fd]), vn, 0, flags);
+	result = file_handle_create(&(curproc->table->handles[*retval]), vn, 0, flags);
+	KASSERT(curproc->table->handles[*retval] != NULL);
 
 	if(result){
 		*retval = -1;
+		kfree(filename);
 		return result;
 	}
 

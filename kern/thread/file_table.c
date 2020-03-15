@@ -4,7 +4,7 @@
 #include <kern/errno.h>
 #include <vfs.h>
 #include <file_handle.h>
-#include<file_table.h>
+#include <file_table.h>
 
 int next_fd_calculate(int current){
   if(current == (MAXHANDLES-1)){
@@ -25,12 +25,12 @@ int file_table_assign_std(struct file_table* table){
     return result;
   }
 
-  result = file_handle_assign_std(table, 0);
+  result = file_handle_assign_std(table, 1);
   if(result){
     return result;
   }
   
-  result = file_handle_assign_std(table, 0);
+  result = file_handle_assign_std(table, 3);
   if(result){
     return result;
   }
@@ -38,23 +38,23 @@ return 0;
 
 }
 
-int get_fd(struct file_table* table){
-  
+int get_fd(struct file_table* table, int* fd){
+
   KASSERT(table != NULL);
-  
+
   spinlock_acquire(table->spin_table);
 
   int ret = -1;
 
   if(table->handles[table->nextfd]==NULL){
 
-    ret = table->nextfd;
+    *fd = table->nextfd;
     
     table->nextfd = next_fd_calculate(table->nextfd);
 
     spinlock_release(table->spin_table);
     
-    return ret;
+    return 0;
   }
 
   for(int i=3;i<MAXHANDLES;i++){
@@ -64,7 +64,8 @@ int get_fd(struct file_table* table){
     }
 
     table->nextfd = next_fd_calculate(i);
-    ret = i;
+    *fd = i;
+    ret = 0;
     break;
 	}
 
