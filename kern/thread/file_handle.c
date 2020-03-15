@@ -1,7 +1,12 @@
-#include<file_handle.h>
+
+#include <types.h>
+#include <lib.h>
+#include <kern/errno.h>
+#include <vfs.h>
+#include <file_handle.h>
 
 
-int file_handle_assign_std(struct file_table* table,int fdnum){
+int file_handle_assign_std(struct file_table* table, int fdnum){
   char console_path[5] = {'c','o','n',':','\n'};
 
   struct vnode* file;
@@ -43,33 +48,35 @@ int file_handle_create(struct file_handle_node** ptr, struct vnode* node, int of
 	}
 	spinlock_init((*ptr)->fd_lock);
 	
-	(ptr)->lock = rwlock_create('0'+fdnum);
+	(*ptr)->lock = rwlock_create("file_handle_lock");
 	
-	if((ptr)->lock == NULL){
+	if((*ptr)->lock == NULL){
 		return ENOMEM;
 	}
 
-	(ptr)->offset = offset;	
+	(*ptr)->offset = offset;	
 	
-	(ptr)->flags = flags;
+	(*ptr)->flags = flags;
 
-	file_object = node;
+	(*ptr)->file_object = node;
 	VOP_INCREF(node);
-	ref_count++;
+	(*ptr)->ref_count++;
 
 	return 0;
 }
 
 int file_handle_destroy(struct file_handle_node* ptr){
 	
-	KASSERT(refcount == 0);
+	KASSERT(ptr->ref_count == 0);
 
 	spinlock_cleanup(ptr->fd_lock);
 	rwlock_destroy(ptr->lock);
 
 	ptr->fd_lock = NULL;
 	ptr->lock = NULL;
-	file_object = NULL;
+	ptr->file_object = NULL;
 
 	kfree(ptr);
+
+	return 0;
 }

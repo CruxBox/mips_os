@@ -11,7 +11,6 @@
 #include <array.h>
 #include <spinlock.h>
 #include <threadlist.h>
-#include <file_table.h>
 
 struct cpu;
 
@@ -90,9 +89,6 @@ struct thread
 
 	/* add more here as needed */
 	pid_t t_pid;
-
-	// adding file handler array aka file table
-  struct file_table* table;
 };
 
 /*
@@ -143,9 +139,6 @@ __DEAD void thread_exit(void);
  * Interrupts need not be disabled.
  */
 void thread_yield(void);
-
-/* get the free file descriptor in the process. Returns -1 if no fd found. */
-int get_fd(struct thread *t);
 
 /*
  * Reshuffle the run queue. Called from the timer interrupt.

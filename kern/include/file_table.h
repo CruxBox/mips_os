@@ -1,7 +1,13 @@
 #ifndef __FILE_TABLE__
 #define __FILE_TABLE__
 
+#include <kern/fcntl.h>
+#include <kern/unistd.h>
+#include <spinlock.h>
+#include <synch.h>
 #include <file_handle.h>
+
+#define MAXHANDLES 128
 
 struct file_table{
 	struct spinlock* spin_table;

@@ -1,3 +1,9 @@
+
+#include <types.h>
+#include <lib.h>
+#include <kern/errno.h>
+#include <vfs.h>
+#include <file_handle.h>
 #include<file_table.h>
 
 int next_fd_calculate(int current){
@@ -35,8 +41,6 @@ return 0;
 int get_fd(struct file_table* table){
   
   KASSERT(table != NULL);
-
-  int result;
   
   spinlock_acquire(table->spin_table);
 
@@ -44,29 +48,32 @@ int get_fd(struct file_table* table){
 
   if(table->handles[table->nextfd]==NULL){
 
-    ret = t->table->nextfd;
+    ret = table->nextfd;
     
     table->nextfd = next_fd_calculate(table->nextfd);
 
-    spinlock_release(t->spin_table);
+    spinlock_release(table->spin_table);
     
     return ret;
   }
 
   for(int i=3;i<MAXHANDLES;i++){
     
-    if(t->table[i].file_object != NULL) {
+    if(table->handles[i] != NULL) {
       continue;
     }
 
-    t->table->nextfd = next_fd_calculate(i);
+    table->nextfd = next_fd_calculate(i);
     ret = i;
     break;
 	}
 
-  spinlock_release(t->spin_table);
+  spinlock_release(table->spin_table);
 
-	return ret;
+	if(ret == -1){
+    return EMFILE;
+  }
+  else return ret;
 }
 
 
@@ -101,5 +108,7 @@ int file_table_destroy(struct file_table* table){
   spinlock_cleanup(table->spin_table);
 
   kfree(table);
+
+  return 0;
 }
 

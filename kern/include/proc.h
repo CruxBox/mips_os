@@ -8,6 +8,7 @@
  */
 
 #include <spinlock.h>
+#include <file_table.h>
 
 struct addrspace;
 struct thread;
@@ -45,6 +46,7 @@ struct proc
 
 	volatile bool exited;
 
+  	struct file_table* table;
 };
 
 /* This is the process structure for the kernel and for kernel-only threads. */

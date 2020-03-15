@@ -334,7 +334,8 @@ file      thread/synch.c
 file      thread/thread.c
 file      thread/threadlist.c
 file      thread/pid.c
-
+file      thread/file_table.c
+file      thread/file_handle.c
 defoption hangman
 optfile   hangman thread/hangman.c
 

@@ -57,6 +57,8 @@ proc_create(const char *name)
 
 	proc->exited = false;
 
+	file_table_init(&(proc->table));
+
 	return proc;
 }
 /*
@@ -143,6 +145,8 @@ void proc_destroy(struct proc *proc)
 	}
 
 	proc->exited = true;
+
+	file_table_destroy(proc->table);
 	
 	KASSERT(proc->p_numthreads == 0);
 	spinlock_cleanup(&proc->p_lock);
