@@ -11,6 +11,7 @@
 #include <array.h>
 #include <spinlock.h>
 #include <threadlist.h>
+#include <file_table.h>
 
 struct cpu;
 
@@ -26,17 +27,6 @@ struct cpu;
 
 /* Macro to test if two addresses are on the same kernel stack */
 #define SAME_STACK(p1, p2) (((p1)&STACK_MASK) == ((p2)&STACK_MASK))
-
-#define MAXHANDLES 128
-
-
-struct file_handle_node{
-  
-	struct lock *lock;
-  	char* seeker;
-  	struct vnode* file_object;
-	int ref_count;
-};
 
 /* States a thread can be in. */
 typedef enum
@@ -102,7 +92,7 @@ struct thread
 	pid_t t_pid;
 
 	// adding file handler array aka file table
-    struct file_handle_node file_table[MAXHANDLES];
+  struct file_table* table;
 };
 
 /*
