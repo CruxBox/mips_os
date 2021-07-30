@@ -18,6 +18,7 @@ static bool test_status = TEST161_FAIL;
 struct semaphore *donetest = NULL;
 struct rwlock *test;
 struct spinlock spinner;
+struct lock* locker;
 char *buffer;
 char *queue;
 static int count = -1;
@@ -42,24 +43,29 @@ void writer_thread(void *junk1, unsigned long num)
 {
 	(void)junk1;
 	static int index = 0;
+	kprintf("something\n");
 	random_yielder(4);
-
 	rwlock_acquire_write(test);
-	kprintf_n("Writer Thread %lu\n", num);
+	kprintf("Start write\n");
+	// spinlock_acquire(&spinner);
+	lock_acquire(locker);
+	kprintf("Writer Thread %lu\n", num);
 
 	random_yielder(4);
 	count++;
 	queue[count] = 'W';
-	kprintf_n("queue: %s\n", queue);
+	kprintf("queue: %s\n", queue);
 
 	random_yielder(4);
 
 	buffer[index] = 'a' + num;
 	index++;
 
-	kprintf_n("buffer: %s\n", buffer);
-
+	kprintf("buffer: %s\n", buffer);
+  	// spinlock_release(&spinner);
+	lock_release(locker);
 	rwlock_release_write(test);
+	kprintf("Done write\n");
 	V(donetest);
 }
 
@@ -69,25 +75,27 @@ void reader_thread(void *junk1, unsigned long num)
 	(void)num;
 	static int index2 = 0;
 	random_yielder(4);
-
 	rwlock_acquire_read(test);
+	kprintf("Start read\n");
 	random_yielder(4);
-	kprintf_n("Reader Thread %lu\n", num);
-
-	spinlock_acquire(&spinner);
+	// spinlock_acquire(&spinner);
+	lock_acquire(locker);
+	kprintf("Reader Thread %lu\n", num);
 	count++;
 	queue[count] = 'R';
 
 	reader_positions[index2] = count;
-	kprintf_n("queue: %s\n", queue);
+	kprintf("queue: %s\n", queue);
 	readers_buffer[index2] = kstrdup(buffer);
 
-	kprintf_n("reader_buffer[%lu]: %s\n", num, readers_buffer[index2]);
+	kprintf("reader_buffer[%lu]: %s\n", num, readers_buffer[index2]);
 
 	index2++;
-	spinlock_release(&spinner);
-
+	kprintf("Going to release read\n");
+	// spinlock_release(&spinner);
+	lock_release(locker);
 	rwlock_release_read(test);
+	kprintf("Done read\n");
 	V(donetest);
 }
 
@@ -95,7 +103,8 @@ int rwtest(int nargs, char **args)
 {
 	(void)nargs;
 	(void)args;
-	spinlock_init(&spinner);
+	// spinlock_init(&spinner);
+	locker = lock_create("locker");
 
 	test = rwlock_create("rwt1");
 	donetest = sem_create("donetest", 0);

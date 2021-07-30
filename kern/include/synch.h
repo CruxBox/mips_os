@@ -48,8 +48,8 @@ struct lock
         char *lk_name;
         struct thread *holder;
         struct wchan *lock_wchan;
-        struct spinlock spinlock_wchan;
-        volatile int available;
+        struct spinlock lock_spinlock;
+        // volatile int available;
         HANGMAN_LOCKABLE(lk_hangman); /* Deadlock detector hook. */
         // add what you need here
         // (don't forget to mark things volatile as needed)
@@ -124,12 +124,20 @@ void cv_broadcast(struct cv *cv, struct lock *lock);
  * (should be) made internally.
  */
 
+struct rwQueueItem{
+	char entity;
+	struct rwQueueItem* next;
+};
+
 struct rwlock
 {
         char *rwlock_name;
-        struct semaphore* sem_readers;
-        struct lock* writer_lock;
-        struct cv* cv_writer;
+        struct spinlock lock_spinlock;
+		struct wchan* lock_wchan;
+		struct rwQueueItem* lock_queue;
+			// queue only holds 'R' or 'W'. The real thread is help in wchan.
+		int numberOfReaders;
+		bool isWriteMode;
 };
 
 struct rwlock *rwlock_create(const char *);
@@ -151,5 +159,11 @@ void rwlock_acquire_read(struct rwlock *);
 void rwlock_release_read(struct rwlock *);
 void rwlock_acquire_write(struct rwlock *);
 void rwlock_release_write(struct rwlock *);
+
+
+
+void rwQueueItemDestroy(struct rwQueueItem** head);
+void rwQueueItemAdd(struct rwQueueItem** head, char entity);
+void rwQueueItemWake(struct rwlock* rw);
 
 #endif /* _SYNCH_H_ */
