@@ -43,12 +43,12 @@ void writer_thread(void *junk1, unsigned long num)
 {
 	(void)junk1;
 	static int index = 0;
-	kprintf("something\n");
+	
 	random_yielder(4);
 	rwlock_acquire_write(test);
 	kprintf("Start write\n");
-	// spinlock_acquire(&spinner);
-	lock_acquire(locker);
+	spinlock_acquire(&spinner);
+	
 	kprintf("Writer Thread %lu\n", num);
 
 	random_yielder(4);
@@ -62,8 +62,8 @@ void writer_thread(void *junk1, unsigned long num)
 	index++;
 
 	kprintf("buffer: %s\n", buffer);
-  	// spinlock_release(&spinner);
-	lock_release(locker);
+  	spinlock_release(&spinner);
+	
 	rwlock_release_write(test);
 	kprintf("Done write\n");
 	V(donetest);
@@ -76,10 +76,9 @@ void reader_thread(void *junk1, unsigned long num)
 	static int index2 = 0;
 	random_yielder(4);
 	rwlock_acquire_read(test);
-	kprintf("Start read\n");
 	random_yielder(4);
-	// spinlock_acquire(&spinner);
-	lock_acquire(locker);
+	spinlock_acquire(&spinner);
+	
 	kprintf("Reader Thread %lu\n", num);
 	count++;
 	queue[count] = 'R';
@@ -91,9 +90,9 @@ void reader_thread(void *junk1, unsigned long num)
 	kprintf("reader_buffer[%lu]: %s\n", num, readers_buffer[index2]);
 
 	index2++;
-	kprintf("Going to release read\n");
-	// spinlock_release(&spinner);
-	lock_release(locker);
+	
+	spinlock_release(&spinner);
+	
 	rwlock_release_read(test);
 	kprintf("Done read\n");
 	V(donetest);
@@ -103,8 +102,8 @@ int rwtest(int nargs, char **args)
 {
 	(void)nargs;
 	(void)args;
-	// spinlock_init(&spinner);
-	locker = lock_create("locker");
+	spinlock_init(&spinner);
+	
 
 	test = rwlock_create("rwt1");
 	donetest = sem_create("donetest", 0);

@@ -364,20 +364,21 @@ void rwQueueItemWake(struct rwlock* rw){
 			temp = temp->next;
 		}
 		temp = head;
-		while(count--){
+		while(count){
 			rw->lock_queue = temp->next;
 			kfree(temp);
 			wchan_wakeone(rw->lock_wchan, &rw->lock_spinlock);	
-			temp = temp->next;
+			temp = rw->lock_queue;
+			count--;
 		}
 	}
 	else {
+		if (rw->numberOfReaders != 0) return;
 		count = 1;
 		rw->lock_queue = temp->next;
 		kfree(temp);
 		wchan_wakeone(rw->lock_wchan, &rw->lock_spinlock);
 	}
-	kprintf("Found count: %d\n", count);
 }
 
 
@@ -445,7 +446,6 @@ rwlock_release_read(struct rwlock* rw)
 	
 	if (rw->numberOfReaders == 0) {
 		if(isWchanEmpty == false) {
-			kprintf("Found!\n");
 		rwQueueItemWake(rw);
 			// check if queue has readers then wake them till you find a writer.
 			// check if queue has writer, then simply wake it
